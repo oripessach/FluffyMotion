@@ -1,0 +1,12 @@
+{
+  "admin": {
+    "password_hash": "a4c584404eb14d4b97bcaafff78527e80a51dbbc4de0b339eacc3ab24cad8a63",
+    "salt": "d34e18431d02f69c37375b7f07a8eb03",
+    "role": "admin"
+  },
+  "student": {
+    "password_hash": "a6e85d3aa19b3b4cf455d2ecf6d328fc2b22efaa98d8ea0f5a5223597ab713ea",
+    "salt": "6938b0ecbd9f3c0cc28ed2dbb6a88d6b",
+    "role": "student"
+  }
+}
