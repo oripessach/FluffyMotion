@@ -534,6 +534,8 @@ async function loadFrames(projectId) {
     try {
         const res = await api(`/api/projects/${projectId}/frames`);
         state.frames = res.frames || [];
+        state.preloadedImages = [];
+        state.playbackIndex = 0;
         renderFilmstrip();
         updateOnionSkin();
         updateDownloadButton();
@@ -563,7 +565,7 @@ function renderFilmstrip() {
         thumb.dataset.filename = frame.filename;
 
         thumb.innerHTML = `
-            <img src="${frame.url}?t=${Date.now()}" alt="Frame ${idx + 1}">
+            <img src="${frame.url}" alt="Frame ${idx + 1}">
             <span class="frame-number-badge">#${idx + 1}</span>
             <button class="frame-delete-btn" title="Delete frame">🗑️</button>
         `;
@@ -824,6 +826,8 @@ async function deleteFrame(filename) {
     try {
         await api(`/api/projects/${state.currentProject.id}/frames/${filename}`, 'DELETE');
         showToast('Frame deleted', 'info');
+        state.preloadedImages = [];
+        state.playbackIndex = 0;
         await loadFrames(state.currentProject.id);
     } catch (err) {
         showToast(`Failed to delete frame: ${err.message}`, 'error');
@@ -840,6 +844,8 @@ async function reorderFrames(fromIndex, toIndex) {
 
     try {
         await api(`/api/projects/${state.currentProject.id}/frames/reorder`, 'POST', { order });
+        state.preloadedImages = [];
+        state.playbackIndex = 0;
         await loadFrames(state.currentProject.id);
         showToast('Frames reordered! 🎞️', 'success');
     } catch (err) {
@@ -853,10 +859,10 @@ async function reorderFrames(fromIndex, toIndex) {
 // ---------------------------------------------------------------------------
 function preloadFrames() {
     state.preloadedImages = [];
-    state.frames.forEach(frame => {
+    state.frames.forEach((frame, idx) => {
         const img = new Image();
         img.src = frame.url;
-        state.preloadedImages.push(img);
+        state.preloadedImages[idx] = img;
     });
 }
 
@@ -901,9 +907,18 @@ function startPlayback() {
     function step() {
         if (!state.isPlaying || state.frames.length === 0) return;
 
+        if (state.playbackIndex >= state.frames.length) {
+            state.playbackIndex = 0;
+        }
+
         const frame = state.frames[state.playbackIndex];
         if (el.playbackImg && frame) {
-            el.playbackImg.src = frame.url;
+            const preloaded = state.preloadedImages[state.playbackIndex];
+            if (preloaded && preloaded.complete && preloaded.naturalWidth > 0) {
+                el.playbackImg.src = preloaded.src;
+            } else {
+                el.playbackImg.src = frame.url;
+            }
         }
 
         highlightPlayingFrame(state.playbackIndex);

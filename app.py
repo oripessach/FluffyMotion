@@ -8,13 +8,21 @@ The app will be available at http://localhost:5555
 """
 import os
 import sys
+from pathlib import Path
 import webbrowser
 import time
 import threading
 
+if getattr(sys, "frozen", False):
+    BASE = Path(sys.executable).resolve().parent   # folder containing the .exe
+else:
+    BASE = Path(__file__).resolve().parent         # folder containing the .py
+
+STATIC = BASE / "static"
+
 def main():
-    # Determine the base directory (where this script lives)
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Determine the base directory
+    base_dir = str(BASE)
     
     # Add base_dir to Python path so imports work from USB drive
     if base_dir not in sys.path:

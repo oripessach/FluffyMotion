@@ -11,9 +11,21 @@ import subprocess
 import sys
 import threading
 import platform
+from pathlib import Path
 from datetime import datetime, timezone
 
 from flask import Flask, request, session, jsonify, send_from_directory, send_file
+
+
+# ---------------------------------------------------------------------------
+# Base Paths (Frozen/Executable vs Python Script)
+# ---------------------------------------------------------------------------
+if getattr(sys, "frozen", False):
+    BASE = Path(sys.executable).resolve().parent   # folder containing the .exe
+else:
+    BASE = Path(__file__).resolve().parent.parent  # folder containing app.py
+
+STATIC = BASE / "static"
 
 
 # ---------------------------------------------------------------------------
@@ -127,10 +139,25 @@ def _require_admin(app):
 # App Factory
 # ---------------------------------------------------------------------------
 
-def create_app(base_dir):
+def create_app(base_dir=None):
     """Create and configure the Flask application."""
 
-    static_dir = os.path.join(base_dir, "static")
+    if base_dir is None:
+        base_path = BASE
+    else:
+        base_path = Path(base_dir).resolve()
+
+    base_dir = str(base_path)
+    static_dir = str(base_path / "static")
+    data_dir = str(base_path / "data")
+
+    # In frozen exe, verify static_dir exists; fall back to _MEIPASS if bundled internally
+    if getattr(sys, "frozen", False) and not os.path.exists(os.path.join(static_dir, "index.html")):
+        if hasattr(sys, "_MEIPASS"):
+            meipass_static = os.path.join(sys._MEIPASS, "static")
+            if os.path.exists(os.path.join(meipass_static, "index.html")):
+                static_dir = meipass_static
+
     app = Flask(__name__, static_folder=static_dir, static_url_path="/static")
 
     data_dir = os.path.join(base_dir, "data")
@@ -454,12 +481,18 @@ def create_app(base_dir):
         frames = []
 
         if os.path.exists(frames_dir):
-            filenames = sorted([f for f in os.listdir(frames_dir) if f.endswith(".png")])
+            filenames = sorted(
+                [f for f in os.listdir(frames_dir) if f.endswith(".png") and not f.startswith("_tmp_")],
+                key=lambda f: int("".join(filter(str.isdigit, f)) or 0)
+            )
+            p_ver = pdata.get("version", 1)
             for idx, fname in enumerate(filenames):
+                filepath = os.path.join(frames_dir, fname)
+                mtime = int(os.path.getmtime(filepath)) if os.path.exists(filepath) else 0
                 frames.append({
                     "index": idx,
                     "filename": fname,
-                    "url": f"/api/projects/{project_id}/frames/{fname}/image",
+                    "url": f"/api/projects/{project_id}/frames/{fname}/image?v={p_ver}_{mtime}",
                 })
 
         return jsonify({"frames": frames})
@@ -489,11 +522,12 @@ def create_app(base_dir):
         except Exception:
             return jsonify({"success": False, "error": "Invalid base64 image data"}), 400
 
-        frames_dir = os.path.join(get_project_dir(app, username, project_id), "frames")
+        pdir = get_project_dir(app, username, project_id)
+        frames_dir = os.path.join(pdir, "frames")
         os.makedirs(frames_dir, exist_ok=True)
 
         # Determine next frame number
-        existing = sorted([f for f in os.listdir(frames_dir) if f.endswith(".png")])
+        existing = [f for f in os.listdir(frames_dir) if f.endswith(".png") and not f.startswith("_tmp_")]
         next_num = len(existing) + 1
         filename = f"frame_{next_num:03d}.png"
 
@@ -501,14 +535,24 @@ def create_app(base_dir):
         with open(filepath, "wb") as f:
             f.write(image_bytes)
 
-        # Update project frame count
+        # Update project frame count and version
         pdata["frame_count"] = next_num
+        pdata["version"] = pdata.get("version", 0) + 1
         save_project(app, username, project_id, pdata)
 
+        # Invalidate any previously exported video
+        out_mp4 = os.path.join(pdir, "output.mp4")
+        if os.path.exists(out_mp4):
+            try:
+                os.remove(out_mp4)
+            except OSError:
+                pass
+
+        mtime = int(os.path.getmtime(filepath)) if os.path.exists(filepath) else 0
         frame = {
             "index": next_num - 1,
             "filename": filename,
-            "url": f"/api/projects/{project_id}/frames/{filename}/image",
+            "url": f"/api/projects/{project_id}/frames/{filename}/image?v={pdata['version']}_{mtime}",
         }
 
         print(f"[FRAMES] User '{username}' added frame '{filename}' to project '{project_id}'")
@@ -525,23 +569,41 @@ def create_app(base_dir):
         if not pdata:
             return jsonify({"success": False, "error": "Project not found"}), 404
 
-        frames_dir = os.path.join(get_project_dir(app, username, project_id), "frames")
+        pdir = get_project_dir(app, username, project_id)
+        frames_dir = os.path.join(pdir, "frames")
         filepath = os.path.join(frames_dir, filename)
         if not os.path.exists(filepath):
             return jsonify({"success": False, "error": "Frame not found"}), 404
 
         os.remove(filepath)
 
-        # Renumber remaining frames
-        remaining = sorted([f for f in os.listdir(frames_dir) if f.endswith(".png")])
+        # Renumber remaining frames using collision-safe two-phase rename
+        remaining = sorted(
+            [f for f in os.listdir(frames_dir) if f.endswith(".png") and not f.startswith("_tmp_")],
+            key=lambda f: int("".join(filter(str.isdigit, f)) or 0)
+        )
+        temp_map = {}
         for idx, old_name in enumerate(remaining):
-            new_name = f"frame_{idx + 1:03d}.png"
-            if old_name != new_name:
-                os.rename(os.path.join(frames_dir, old_name), os.path.join(frames_dir, new_name))
+            temp_name = f"_tmp_del_{idx}.png"
+            os.rename(os.path.join(frames_dir, old_name), os.path.join(frames_dir, temp_name))
+            temp_map[idx] = temp_name
 
-        # Update frame count
+        for idx in sorted(temp_map.keys()):
+            final_name = f"frame_{idx + 1:03d}.png"
+            os.rename(os.path.join(frames_dir, temp_map[idx]), os.path.join(frames_dir, final_name))
+
+        # Update frame count & version
         pdata["frame_count"] = len(remaining)
+        pdata["version"] = pdata.get("version", 0) + 1
         save_project(app, username, project_id, pdata)
+
+        # Invalidate any previously exported video
+        out_mp4 = os.path.join(pdir, "output.mp4")
+        if os.path.exists(out_mp4):
+            try:
+                os.remove(out_mp4)
+            except OSError:
+                pass
 
         print(f"[FRAMES] User '{username}' deleted frame '{filename}' from project '{project_id}'")
         return jsonify({"success": True})
@@ -558,7 +620,11 @@ def create_app(base_dir):
         if not os.path.exists(filepath):
             return jsonify({"success": False, "error": "Frame not found"}), 404
 
-        return send_file(filepath, mimetype="image/png")
+        resp = send_file(filepath, mimetype="image/png")
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+        return resp
 
     @app.route("/api/projects/<project_id>/frames/reorder", methods=["POST"])
     def api_reorder_frames(project_id):
@@ -576,7 +642,8 @@ def create_app(base_dir):
         if not order:
             return jsonify({"success": False, "error": "No order provided"}), 400
 
-        frames_dir = os.path.join(get_project_dir(app, username, project_id), "frames")
+        pdir = get_project_dir(app, username, project_id)
+        frames_dir = os.path.join(pdir, "frames")
 
         # Verify all files exist
         for fname in order:
@@ -594,6 +661,17 @@ def create_app(base_dir):
         for idx in sorted(temp_map.keys()):
             final_name = f"frame_{idx + 1:03d}.png"
             os.rename(os.path.join(frames_dir, temp_map[idx]), os.path.join(frames_dir, final_name))
+
+        # Update version & invalidate export
+        pdata["version"] = pdata.get("version", 0) + 1
+        save_project(app, username, project_id, pdata)
+
+        out_mp4 = os.path.join(pdir, "output.mp4")
+        if os.path.exists(out_mp4):
+            try:
+                os.remove(out_mp4)
+            except OSError:
+                pass
 
         print(f"[FRAMES] User '{username}' reordered frames in project '{project_id}'")
         return jsonify({"success": True})
@@ -699,8 +777,8 @@ def create_app(base_dir):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    app = create_app(base)
+    app = create_app()
+    base = app.config["BASE_DIR"]
     print(f"[SERVER] Starting on http://0.0.0.0:5555")
     print(f"[SERVER] Base directory: {base}")
     app.run(host="0.0.0.0", port=5555, debug=False)

@@ -176,6 +176,9 @@ To deploy on a USB drive for classroom use:
    - Download static FFmpeg builds from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) (Windows) or [evermeet.cx](https://evermeet.cx/ffmpeg/) (macOS).
    - Place `ffmpeg.exe` in `tools/ffmpeg-win/`.
    - Place `ffmpeg` binary in `tools/ffmpeg-mac/` (make executable with `chmod +x`).
-5. **Execution**:
-   - On Windows: double-click `start.bat`.
+5. **Building a Standalone Windows .exe (PyInstaller)**:
+   - When frozen with PyInstaller (`pyinstaller -F app.py`), `sys.frozen` is set to `True`.
+   - The application detects this and resolves `BASE` to `Path(sys.executable).resolve().parent` (the folder holding `app.exe`), looking for `static/`, `data/`, and `tools/` right next to the executable.
+6. **Execution**:
+   - On Windows: double-click `start.bat` or `app.exe`.
    - On macOS: double-click `start.sh` (or run in Terminal `./start.sh`).
