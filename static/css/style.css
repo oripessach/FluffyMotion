@@ -1,5 +1,5 @@
 /* ============================================================
-   Stop Motion Studio – CSS
+   Fluffy Motion – CSS
    ============================================================ */
 
 /* -- CSS Variables ------------------------------------------ */
@@ -678,6 +678,19 @@ label {
     font-weight: 600;
 }
 
+.onion-skin-control label {
+    width: 175px;
+    white-space: nowrap;
+    user-select: none;
+}
+
+#onion-value {
+    display: inline-block;
+    width: 28px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
 .camera-select-control select { width: auto; min-width: 160px; }
 
 /* -- Onion Skin Slider -------------------------------------- */
@@ -685,6 +698,9 @@ label {
     -webkit-appearance: none;
     appearance: none;
     width: 160px;
+    min-width: 160px;
+    max-width: 160px;
+    flex-shrink: 0;
     height: 8px;
     border-radius: 4px;
     background: linear-gradient(90deg, var(--purple), #d4aaff);

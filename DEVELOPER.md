@@ -1,12 +1,12 @@
-# 🛠️ Stop Motion Studio — Developer Documentation
+# 🛠️ Fluffy Motion — Developer Documentation
 
-This document provides in-depth technical documentation for developers, instructors, and maintainers working with or extending Stop Motion Studio.
+This document provides in-depth technical documentation for developers, instructors, and maintainers working with or extending Fluffy Motion.
 
 ---
 
 ## 1. System Architecture
 
-Stop Motion Studio is architected as a lightweight, zero-dependency, local web application that runs directly from portable media (such as a USB drive) or a standard desktop workstation.
+Fluffy Motion is architected as a lightweight, zero-dependency, local web application that runs directly from portable media (such as a USB drive) or a standard desktop workstation.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -36,7 +36,7 @@ Stop Motion Studio is architected as a lightweight, zero-dependency, local web a
 ## 2. Directory Structure
 
 ```
-Stop Motion Studio/
+Fluffy Motion/
 ├── app.py                      # Main Python entry point (auto-launches browser)
 ├── requirements.txt            # Python dependencies (flask>=2.3.0)
 ├── start.sh                    # Launcher script for macOS & Linux

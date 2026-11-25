@@ -1,7 +1,7 @@
 @echo off
-title Stop Motion Studio
+title Fluffy Motion
 echo.
-echo   🎬  Stop Motion Studio Launcher
+echo   🎬  Fluffy Motion Launcher
 echo   ================================
 echo.
 
@@ -44,7 +44,7 @@ if %ERRORLEVEL% NEQ 0 (
     %PYTHON% -m pip install -r requirements.txt --quiet
 )
 
-echo   🚀  Starting Stop Motion Studio...
+echo   🚀  Starting Fluffy Motion...
 echo.
 %PYTHON% app.py
 

@@ -1,5 +1,5 @@
 /**
- * 🎬 Stop Motion Studio - Frontend Application
+ * 🎬 Fluffy Motion - Frontend Application
  */
 
 // ---------------------------------------------------------------------------

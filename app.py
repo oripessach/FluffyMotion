@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🎬 Stop Motion Studio
+🎬 Fluffy Motion
 An educational stop motion animation application.
 
 Run this script to start the application server.
@@ -48,7 +48,7 @@ def main():
     
     print()
     print("🎬 ═══════════════════════════════════════════")
-    print("   Stop Motion Studio")
+    print("   Fluffy Motion")
     print("   ─────────────────────────────────────────")
     print(f"   Server running at: http://localhost:{port}")
     print("   Press Ctrl+C to stop the server")
@@ -66,7 +66,7 @@ def main():
     try:
         app.run(host=host, port=port, debug=False, threaded=True)
     except KeyboardInterrupt:
-        print("\n👋 Shutting down Stop Motion Studio. Goodbye!")
+        print("\n👋 Shutting down Fluffy Motion. Goodbye!")
 
 if __name__ == '__main__':
     main()

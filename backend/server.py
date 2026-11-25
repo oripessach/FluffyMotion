@@ -1,5 +1,5 @@
 """
-Stop Motion Animation - Flask Backend Server
+Fluffy Motion - Flask Backend Server
 """
 
 import os

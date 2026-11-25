@@ -1,11 +1,11 @@
 #!/bin/bash
-# 🎬 Stop Motion Studio - macOS/Linux Launcher
-# This script starts the Stop Motion Studio application.
+# 🎬 Fluffy Motion - macOS/Linux Launcher
+# This script starts the Fluffy Motion application.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "🎬 Stop Motion Studio Launcher"
+echo "🎬 Fluffy Motion Launcher"
 echo "================================"
 
 # Check for Python 3
@@ -30,5 +30,5 @@ if [ $? -ne 0 ]; then
 fi
 
 # Start the application
-echo "🚀 Starting Stop Motion Studio..."
+echo "🚀 Starting Fluffy Motion..."
 $PYTHON app.py

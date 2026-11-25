@@ -1,4 +1,4 @@
-# 🎬 Stop Motion Studio
+# 🎬 Fluffy Motion
 
 An educational stop motion animation application that runs in your browser. Perfect for classrooms, workshops, and creative projects!
 
@@ -87,7 +87,7 @@ The application will start and open in your default browser at `http://localhost
 ### Architecture
 
 ```
-Stop Motion Studio
+Fluffy Motion
 ├── app.py              # Application entry point
 ├── requirements.txt    # Python dependencies (Flask)
 ├── backend/
@@ -173,7 +173,7 @@ Stop Motion Studio
 
 1. **Prepare the USB Drive**:
    - Format as NTFS or exFAT
-   - Copy the entire Stop Motion Studio folder to the drive
+   - Copy the entire Fluffy Motion folder to the drive
 
 2. **Bundle Python** (optional, for systems without Python):
    - Download [WinPython](https://winpython.github.io/) or [Python Embeddable Package](https://www.python.org/downloads/)
