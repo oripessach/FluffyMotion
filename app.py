@@ -44,7 +44,7 @@ def main():
     app = create_app(base_dir)
     
     port = 5555
-    host = '0.0.0.0'
+    host = '127.0.0.1'
     
     print()
     print("🎬 ═══════════════════════════════════════════")

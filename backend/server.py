@@ -779,6 +779,6 @@ def create_app(base_dir=None):
 if __name__ == "__main__":
     app = create_app()
     base = app.config["BASE_DIR"]
-    print(f"[SERVER] Starting on http://0.0.0.0:5555")
+    print(f"[SERVER] Starting on http://127.0.0.1:5555")
     print(f"[SERVER] Base directory: {base}")
-    app.run(host="0.0.0.0", port=5555, debug=False)
+    app.run(host="127.0.0.1", port=5555, debug=False)
